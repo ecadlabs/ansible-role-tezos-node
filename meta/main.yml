@@ -1,0 +1,19 @@
+galaxy_info:
+  author: Jev Bjorsell
+  description: Builder of tools for builders of things
+  company: ECAD Labs Inc.
+  issue_tracker_url: https://github.com/ecadlabs/ansible-role-tezos-node/issues
+
+  license: MIT
+
+  min_ansible_version: 2.4
+
+  platforms:
+  - name: Debian
+    versions:
+    - 10
+
+  galaxy_tags: ['blockchain', 'tezos']
+
+dependencies: []
+

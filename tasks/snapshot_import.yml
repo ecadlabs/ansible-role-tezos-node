@@ -1,0 +1,49 @@
+- name: check if data dir context exists
+  stat:
+    path: "{{ node_data_dir }}/context"
+  register: context_dir
+
+- name: check if data dir store exists
+  stat:
+    path: "{{ node_data_dir }}/store"
+  register: store_dir
+
+- name: import snapshot block
+  block:
+    - name: download snapshot
+      #If the snapshot path is a URL, then download it
+      get_url:
+        url: "{{ snapshot_url }}"
+        dest: "{{ snapshot_tmp_file }}" #TODO: Use tempfile
+        mode: '0440'
+      when: snapshot_url is regex("^https?:.*")
+
+    - name: copy snapshot
+      #If the snapshot path is a unix file path, then copy it
+      when: snapshot_url is regex("^\/.*")
+      copy:
+        src: "{{ snapshot_url }}"
+        dest: "{{ snapshot_tmp_file }}" #TODO: Use tempfile
+        mode: '0440'
+
+    - name: import snapshot (this can take some time)
+      docker_container:
+        name: import_snapshot
+        image: "{{ tezos_docker_image }}"
+        interactive: yes
+        detach: no
+        cleanup: yes
+        volumes:
+          - "{{ node_data_dir }}:/data/node"
+          - "{{ client_data_dir }}:/data/client"
+          -  "{{ snapshot_tmp_file }}:/data/snapshot"
+        entrypoint: tezos-node
+        command: >
+          snapshot import /data/snapshot
+          --network {{ network }}
+          --block {{ snapshot_block_hash }}
+          --data-dir=/data/node/
+      register: import_out
+    - debug:
+        msg:  "Import output: {{ import_out }}"
+  when: not context_dir.stat.exists and not store_dir.stat.exists

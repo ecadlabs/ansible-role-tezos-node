@@ -1,0 +1,107 @@
+---
+# tasks file for roles/tezos_node
+
+- name: node data directories
+  file:
+    dest: "{{ item }}"
+    state: directory
+    owner: "100"
+  with_items:
+    - "{{ node_data_dir }}"
+    - "{{ client_data_dir }}"
+
+- name: check if an config.json exists
+  stat:
+    path: "{{ node_data_dir }}/config.json"
+  register: has_config
+
+- name: render tezos config file from "{{ tezos_node_config_template }}"
+  when: tezos_node_config_template is defined and has_config.stat.exists
+  template:
+    src: "{{ tezos_node_config_template }}"
+    dest: "{{ node_data_dir }}/config.json"
+    owner: "100"
+
+- name: generate tezos config "{{ network }}"
+  when:  not has_config.stat.exists and tezos_node_config_template is undefined
+  docker_container:
+    name: init_tezos_config
+    image: "{{ tezos_docker_image }}"
+    interactive: yes
+    detach: no
+    cleanup: yes
+    volumes:
+      - "{{ node_data_dir }}:/data/node"
+      - "{{ client_data_dir }}:/data/client"
+    entrypoint: tezos-node
+    command: >
+      config init --network {{ network }}
+      --config-file=/data/node/config.json
+
+#TODO: consider removing this
+- name: render tezos version.json file from "{{ tezos_node_version_template }}"
+  template:
+    src: "{{ tezos_node_version_template }}"
+    dest: "{{ node_data_dir }}/version.json"
+    owner: "100"
+
+- name: check if an identity exists
+  stat:
+    path: "{{ node_data_dir }}/identity.json"
+  register: has_identity
+
+# Generate identity
+- name: generate identity (Can take several minutes)
+  docker_container:
+    name: identity_generate
+    image: "{{ tezos_docker_image }}"
+    interactive: yes
+    detach: no
+    cleanup: yes
+    volumes:
+      - "{{ node_data_dir }}:/data/node"
+      - "{{ client_data_dir }}:/data/client"
+    entrypoint: tezos-node
+    command: >
+      identity generate
+      --config-file=/data/node/config.json
+      --data-dir=/data/node/
+  register: gen_id_out
+    # command: tezos-node --config_custom-file=/data/node/config_custom.json --bootstrap-threshold 1
+    # entrypoint: ls -al /data/
+  when: not has_identity.stat.exists
+
+- debug:
+    msg: "{{ gen_id_out }}"
+
+- name: import snapshot include
+  when: bootstrap_strategy == "snapshot"
+  include: snapshot_import.yml
+
+- name: create docker network
+  docker_network:
+    name: "{{ network_name }}"
+
+- name: run tezos node
+  docker_container:
+    name: "{{ network }}_node"
+    image: "{{ tezos_docker_image }}"
+    restart: yes
+    recreate: yes
+    volumes:
+      - "{{ node_data_dir }}:/data/node"
+      - "{{ client_data_dir }}:/data/client"
+    ports:
+      - 9001:9000
+    entrypoint: >
+      tezos-node
+      run
+      --network "{{ network }}"
+      --rpc-addr 0.0.0.0:9000
+      --config-file=/data/node/config.json
+      --data-dir=/data/node/
+      --history-mode "{{ history_mode }}"
+      --bootstrap-threshold 1
+    networks:
+      - name: "{{ network_name }}"
+
