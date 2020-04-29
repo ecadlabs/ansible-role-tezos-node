@@ -104,4 +104,3 @@
       --bootstrap-threshold 1
     networks:
       - name: "{{ network_name }}"
-

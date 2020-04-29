@@ -36,7 +36,7 @@
         volumes:
           - "{{ node_data_dir }}:/data/node"
           - "{{ client_data_dir }}:/data/client"
-          -  "{{ snapshot_tmp_file }}:/data/snapshot"
+          - "{{ snapshot_tmp_file }}:/data/snapshot"
         entrypoint: tezos-node
         command: >
           snapshot import /data/snapshot
