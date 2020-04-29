@@ -66,7 +66,12 @@ Example Playbook
 
     - hosts: servers
       roles:
-         - { role: ecadlabs.tezos_node, bootstrap_strategy: snapshot }
+        - role: ecadlabs.tezos_node
+          bootstrap_strategy: snapshot
+          snapshot_url: "https://storage.googleapis.com/tezos-snapshots/snapshot_cart.full"
+          network: carthagenet
+          snapshot_block_hash: BLTU1znZ4H1Mz3mMWNhqrsMSehosYL31nqrrrihxD7FRjkEGLPT
+          snapshot_tmp_file: /tmp/snapshot
 
 License
 -------
