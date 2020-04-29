@@ -1,4 +1,5 @@
 galaxy_info:
+  role_name: tezos_node
   author: Jev Bjorsell
   description: Builder of tools for builders of things
   company: ECAD Labs Inc.
