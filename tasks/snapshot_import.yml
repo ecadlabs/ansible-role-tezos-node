@@ -15,7 +15,7 @@
       get_url:
         url: "{{ snapshot_url }}"
         dest: "{{ snapshot_tmp_file }}" #TODO: Use tempfile
-        mode: '0440'
+        mode: '0444'
       when: snapshot_url is regex("^https?:.*")
 
     - name: copy snapshot
@@ -24,7 +24,7 @@
       copy:
         src: "{{ snapshot_url }}"
         dest: "{{ snapshot_tmp_file }}" #TODO: Use tempfile
-        mode: '0440'
+        mode: '0444'
 
     - name: import snapshot (this can take some time)
       docker_container:
