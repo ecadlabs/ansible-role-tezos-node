@@ -7,6 +7,8 @@ The role is heavily parameterized, allowing users to deploy nodes for different 
 
 Two bootstrap strategies are supported, namely syncing from genesis or importing a snapshot for fast bootstrapping.
 
+_This role does not manage any Tezos keys_
+
 Requirements
 ------------
 

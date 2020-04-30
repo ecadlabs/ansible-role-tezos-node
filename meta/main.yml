@@ -1,7 +1,7 @@
 galaxy_info:
   role_name: tezos_node
   author: Jev Bjorsell
-  description: Builder of tools for builders of things
+  description: Setups up a Tezos Node
   company: ECAD Labs Inc.
   issue_tracker_url: https://github.com/ecadlabs/ansible-role-tezos-node/issues
 

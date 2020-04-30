@@ -86,18 +86,18 @@
   docker_container:
     name: "{{ tezos_network }}_node"
     image: "{{ tezos_docker_image }}"
-    restart: yes
     recreate: yes
+    restart_policy: always
     volumes:
       - "{{ node_data_dir }}:/data/node"
       - "{{ client_data_dir }}:/data/client"
     ports:
-      - 9001:9000
+      - "{{ RPC_PORT }}:{{ RPC_PORT_INTERNAL }}"
     entrypoint: >
       tezos-node
       run
       --network "{{ tezos_network }}"
-      --rpc-addr 0.0.0.0:9000
+      --rpc-addr 0.0.0.0:{{ RPC_PORT_INTERNAL }}
       --config-file=/data/node/config.json
       --data-dir=/data/node/
       --history-mode "{{ history_mode }}"
