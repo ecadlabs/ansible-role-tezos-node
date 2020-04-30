@@ -22,7 +22,7 @@
     dest: "{{ node_data_dir }}/config.json"
     owner: "100"
 
-- name: generate tezos config "{{ network }}"
+- name: generate tezos config "{{ tezos_network }}"
   when:  not has_config.stat.exists and tezos_node_config_template is undefined
   docker_container:
     name: init_tezos_config
@@ -35,7 +35,7 @@
       - "{{ client_data_dir }}:/data/client"
     entrypoint: tezos-node
     command: >
-      config init --network {{ network }}
+      config init --network {{ tezos_network }}
       --config-file=/data/node/config.json
 
 #TODO: consider removing this
@@ -80,11 +80,11 @@
 
 - name: create docker network
   docker_network:
-    name: "{{ network_name }}"
+    name: "{{ tezos_network }}"
 
 - name: run tezos node
   docker_container:
-    name: "{{ network }}_node"
+    name: "{{ tezos_network }}_node"
     image: "{{ tezos_docker_image }}"
     restart: yes
     recreate: yes
@@ -96,11 +96,11 @@
     entrypoint: >
       tezos-node
       run
-      --network "{{ network }}"
+      --network "{{ tezos_network }}"
       --rpc-addr 0.0.0.0:9000
       --config-file=/data/node/config.json
       --data-dir=/data/node/
       --history-mode "{{ history_mode }}"
       --bootstrap-threshold 1
     networks:
-      - name: "{{ network_name }}"
+      - name: "{{ tezos_network }}"
