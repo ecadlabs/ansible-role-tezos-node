@@ -7,7 +7,7 @@ The role is heavily parameterized, allowing users to deploy nodes for different 
 
 Two bootstrap strategies are supported, namely syncing from genesis or importing a snapshot for fast bootstrapping.
 
-The role uses [Version 7 of the Tezos Node][tezosv7], also known as the multinetwork node.
+The role uses [Version 7 of the Tezos Node][tezos_v7], also known as the multinetwork node.
 
 _This role does not manage any Tezos keys_
 
