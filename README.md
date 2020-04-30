@@ -3,7 +3,7 @@ Role Name
 
 This Ansible Role aims to make deploying a Tezos node fast and easy for Ansible users.
 
-The role is heavily parameterised, allowing users to deploy nodes for different Tezos networks (mainnet/carthagenet/labnet/etc..) and various economic protocols to support block transitions.
+The role is heavily parameterized, allowing users to deploy nodes for different Tezos networks (mainnet/carthagenet/labnet/etc..) and various economic protocols to support block transitions.
 
 Two bootstrap strategies are supported, namely syncing from genesis or importing a snapshot for fast bootstrapping.
 
@@ -11,6 +11,13 @@ Requirements
 ------------
 
 Docker (Tested on Debian Buster)
+
+Installation
+------------
+
+_Note, the package name will change to `ecadlabs.tezos_node` when [#2367][https://github.com/ansible/galaxy/issues/2367] is resolved_
+
+    ansible-galaxy install jevonearth.tezos_node
 
 Role Variables
 --------------
