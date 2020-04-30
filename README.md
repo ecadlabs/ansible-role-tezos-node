@@ -7,6 +7,8 @@ The role is heavily parameterized, allowing users to deploy nodes for different 
 
 Two bootstrap strategies are supported, namely syncing from genesis or importing a snapshot for fast bootstrapping.
 
+The role uses [Version 7 of the Tezos Node][tezosv7], also known as the multinetwork node.
+
 _This role does not manage any Tezos keys_
 
 Requirements
@@ -32,11 +34,11 @@ The Tezos network you wish to provision. This variable does not have a default, 
 
 The location where on the host the Tezos nodes data directory will reside. This role uses Docker bind mounts over docker volumes.
 
-    node_data_dir: "/srv/tezos/{{ network }}_node"
+    node_data_dir: "/srv/tezos/{{ tezos_network }}_node"
 
 The location on the host where the Tezos client configuration will reside. This directory contains client configuration and keys used by the `tezos-client` command.
 
-    client_data_dir: "/srv/tezos/{{ network }}_client"
+    client_data_dir: "/srv/tezos/{{ tezos_network }}_client"
 
 The tezos docker image to use.
 
@@ -88,3 +90,6 @@ Author Information
 ------------------
 
 Created by the humans from ECAD Labs Inc. https://ecadlabs.com
+
+
+[tezos_v7]: https://tezos.gitlab.io/releases/version-7.html
