@@ -19,9 +19,7 @@ Docker (Tested on Debian Buster)
 Installation
 ------------
 
-_Note, the package name will change to `ecadlabs.tezos_node` when https://github.com/ansible/galaxy/issues/2367 is resolved_
-
-    ansible-galaxy install jevonearth.tezos_node
+    ansible-galaxy install ecadlabs.tezos_node
 
 Role Variables
 --------------
