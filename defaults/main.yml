@@ -6,8 +6,8 @@ tezos_docker_image: tezos/tezos:v7.0-rc1
 tezos_node_version_template: tezos_role_default_version.json.j2
 tezos_storage_version: 0.0.4
 
-node_data_dir: "/srv/tezos/{{ network }}_node"
-client_data_dir: "/srv/tezos/{{ network }}_client"
+node_data_dir: "/srv/tezos/{{ tezos_network }}_node"
+client_data_dir: "/srv/tezos/{{ tezos_network }}_client"
 
 history_mode: full
 

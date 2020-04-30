@@ -40,7 +40,7 @@
         entrypoint: tezos-node
         command: >
           snapshot import /data/snapshot
-          --network {{ network }}
+          --network {{ tezos_network }}
           --block {{ snapshot_block_hash }}
           --data-dir=/data/node/
       register: import_out
