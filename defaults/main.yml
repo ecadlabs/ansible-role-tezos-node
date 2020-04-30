@@ -16,5 +16,8 @@ RPC_PORT_INTERNAL: 8732
 
 history_mode: full
 
+# Location of temp file for snapshot import
+snapshot_tmp_file: /tmp/snapshot
+
 # genesis or snapshot
 bootstrap_strategy: genesis
