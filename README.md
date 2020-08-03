@@ -74,9 +74,9 @@ Example Playbook
       roles:
         - role: ecadlabs.tezos_node
           bootstrap_strategy: snapshot
-          snapshot_url: "https://storage.googleapis.com/tezos-snapshots/snapshot_cart.full"
+          snapshot_url: snapshot_carthagenet_BLy7vs2msoekpJQs81GpfWkHsseTWDfp4HbVwHLfpAMzuL5YVtB.full
           tezos_network: carthagenet
-          snapshot_block_hash: BLHFBWdSiGL8AZVCM8PP3qXeD6HBuoZimfM5jWfRfL6n8FF6mK2
+          snapshot_block_hash: BLy7vs2msoekpJQs81GpfWkHsseTWDfp4HbVwHLfpAMzuL5YVtB
           snapshot_tmp_file: /tmp/snapshot
 
 License
