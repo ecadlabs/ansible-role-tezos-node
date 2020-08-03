@@ -10,7 +10,7 @@
     - "{{ node_data_dir }}"
     - "{{ client_data_dir }}"
 
-- name: check if an config.json exists
+- name: check if a node config.json exists
   stat:
     path: "{{ node_data_dir }}/config.json"
   register: has_config
@@ -109,7 +109,13 @@
     port: "{{ RPC_PORT }}"
     host: "localhost"
 
+- name: check if an config.json exists
+  stat:
+    path: "{{ client_data_dir }}/config"
+  register: has_client_config
+
 - name: generate tezos-client config "{{ tezos_network }}"
+  when:  not has_client_config.stat.exists
   docker_container:
     name: init_tezos_client_config
     image: "{{ tezos_docker_image }}"
