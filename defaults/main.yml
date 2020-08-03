@@ -1,7 +1,7 @@
 ---
 # defaults file for roles/tezos_node
 
-tezos_docker_image: tezos/tezos:v7.1
+tezos_docker_image: tezos/tezos:v7.3
 
 tezos_node_version_template: tezos_role_default_version.json.j2
 tezos_storage_version: 0.0.4
