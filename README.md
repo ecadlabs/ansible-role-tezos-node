@@ -40,7 +40,7 @@ The location on the host where the Tezos client configuration will reside. This 
 
 The tezos docker image to use.
 
-    tezos_docker_image: tezos/tezos:v7.0-rc1
+    tezos_docker_image: tezos/tezos:v7.4
 
 The history mode you wish to operate your node in. Options are full, archive or snapshot (currently only tested using `full`)
 
@@ -54,7 +54,7 @@ The path or URL to the snapshot file that will be used for the initial import of
 
     snapshot_url:
 
-The path or URL to the snapshot file that will be used for the initial import of your node. The snapshot will be stored to the host and mounted via a volume into a short-lived docker image responsible for the import process.
+The path or URL to the snapshot file that will be used for the initial import of your node. The snapshot will be downloaded to the target host's filesystem and mounted via a volume into a short-lived docker image responsible for the import process.
 
         snapshot_tmp_file: /tmp/snapshot
 
@@ -70,13 +70,26 @@ None (but make sure you have docker installed, `geerlingguy.docker` works well)
 Example Playbook
 ----------------
 
+For carthagenet:
+
     - hosts: servers
       roles:
         - role: ecadlabs.tezos_node
           bootstrap_strategy: snapshot
-          snapshot_url: snapshot_carthagenet_BLy7vs2msoekpJQs81GpfWkHsseTWDfp4HbVwHLfpAMzuL5YVtB.full
+          snapshot_url: https://storage.googleapis.com/tezos-snapshots/snapshot_carthagenet_BLsDDgeFGC2kGBCMpRm7T3DviJNxyrpJCUuj4fuReNW6hrkUDwa.full 
           tezos_network: carthagenet
-          snapshot_block_hash: BLy7vs2msoekpJQs81GpfWkHsseTWDfp4HbVwHLfpAMzuL5YVtB
+          snapshot_block_hash: BLsDDgeFGC2kGBCMpRm7T3DviJNxyrpJCUuj4fuReNW6hrkUDwa
+          snapshot_tmp_file: /tmp/snapshot
+
+For mainnet:
+
+    - hosts: servers
+      roles:
+        - role: ecadlabs.tezos_node
+          bootstrap_strategy: snapshot
+          snapshot_url: https://storage.googleapis.com/tezos-snapshots/snapshot_mainnet_BLJZH8LBh64L9gasBZnTjbCGf5vVefYDCMr5bJYsamb4GWXTaox.full
+          tezos_network: mainnet
+          snapshot_block_hash: BLJZH8LBh64L9gasBZnTjbCGf5vVefYDCMr5bJYsamb4GWXTaox
           snapshot_tmp_file: /tmp/snapshot
 
 License

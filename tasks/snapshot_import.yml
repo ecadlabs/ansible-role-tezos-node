@@ -47,3 +47,8 @@
     - debug:
         msg:  "Import output: {{ import_out }}"
   when: not context_dir.stat.exists and not store_dir.stat.exists
+
+- name: remove snapshot file
+  file:
+    path: "{{ snapshot_tmp_file }}" 
+    state: absent
