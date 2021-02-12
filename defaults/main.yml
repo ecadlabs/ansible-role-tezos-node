@@ -1,10 +1,7 @@
 ---
 # defaults file for roles/tezos_node
 
-tezos_docker_image: tezos/tezos:v7.4
-
-tezos_node_version_template: tezos_role_default_version.json.j2
-tezos_storage_version: 0.0.4
+tezos_docker_image: tezos/tezos:v8.2
 
 node_data_dir: "/srv/tezos/{{ tezos_network }}_node"
 client_data_dir: "/srv/tezos/{{ tezos_network }}_client"
@@ -13,6 +10,8 @@ client_data_dir: "/srv/tezos/{{ tezos_network }}_client"
 RPC_PORT: 8732
 # The port that the Tezos RPC process listens on internally
 RPC_PORT_INTERNAL: 8732
+
+node_rpc_url: "http://{{ tezos_network }}_node:{{ RPC_PORT_INTERNAL }}"
 
 history_mode: full
 

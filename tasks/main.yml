@@ -10,12 +10,12 @@
     - "{{ node_data_dir }}"
     - "{{ client_data_dir }}"
 
-- name: check if a node config.json exists
+- name: check if a tezos-node config.json exists
   stat:
     path: "{{ node_data_dir }}/config.json"
   register: has_config
 
-- name: render tezos config file from "{{ tezos_node_config_template }}"
+- name: render tezos tezos-node config file from "{{ tezos_node_config_template }}"
   when: tezos_node_config_template is defined and not has_config.stat.exists
   template:
     src: "{{ tezos_node_config_template }}"
@@ -36,13 +36,6 @@
     command: >
       config init --network {{ tezos_network }}
       --config-file=/data/node/config.json
-
-#TODO: consider removing this
-- name: render tezos version.json file from "{{ tezos_node_version_template }}"
-  template:
-    src: "{{ tezos_node_version_template }}"
-    dest: "{{ node_data_dir }}/version.json"
-    owner: "100"
 
 - name: check if an identity exists
   stat:
@@ -65,13 +58,7 @@
       identity generate
       --config-file=/data/node/config.json
       --data-dir=/data/node/
-  register: gen_id_out
-    # command: tezos-node --config_custom-file=/data/node/config_custom.json --bootstrap-threshold 1
-    # entrypoint: ls -al /data/
   when: not has_identity.stat.exists
-
-- debug:
-    msg: "{{ gen_id_out }}"
 
 - name: import snapshot include
   when: bootstrap_strategy == "snapshot"
@@ -109,7 +96,7 @@
     port: "{{ RPC_PORT }}"
     host: "localhost"
 
-- name: check if an config.json exists
+- name: check if an tezos-client config.json exists
   stat:
     path: "{{ client_data_dir }}/config"
   register: has_client_config
@@ -126,8 +113,7 @@
       - "{{ client_data_dir }}:/home/tezos/.tezos-client"
     entrypoint: /usr/local/bin/tezos-client
     command: >
-      --addr {{ tezos_network }}_node
-      --port {{ RPC_PORT_INTERNAL }}
+      --endpoint {{ node_rpc_url }}
       config init
     networks:
       - name: "{{ tezos_network }}"
