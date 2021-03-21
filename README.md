@@ -3,11 +3,11 @@ Role Name
 
 This Ansible Role aims to make deploying a Tezos node fast and easy for Ansible users.
 
-The role is heavily parameterized, allowing users to deploy nodes for different Tezos networks (mainnet/carthagenet/labnet/etc..) and various economic protocols to support block transitions.
+The role is heavily parameterized, allowing users to deploy nodes for different Tezos networks (mainnet/edonet/florencenet/etc..) and various economic protocols to support block transitions.
 
 Two bootstrap strategies are supported, namely syncing from genesis or importing a snapshot for fast bootstrapping.
 
-The role uses [Version 7 of the Tezos Node][tezos_v7], also known as the multinetwork node.
+The role has been tested against [Version 8 of the Tezos Node][tezos_v8].
 
 _This role does not manage any Tezos keys_
 
@@ -40,7 +40,7 @@ The location on the host where the Tezos client configuration will reside. This 
 
 The tezos docker image to use.
 
-    tezos_docker_image: tezos/tezos:v7.4
+    tezos_docker_image: tezos/tezos:v8.2
 
 The history mode you wish to operate your node in. Options are full, archive or snapshot (currently only tested using `full`)
 
@@ -60,7 +60,7 @@ The path or URL to the snapshot file that will be used for the initial import of
 
 The block hash of the _last_ block in the snapshot file. The import process uses this value to verify that the latest hash of the provided import file is the one you are expecting.
 
-    snapshot_block_hash: BLHFBWdSiGL8AZVCM8PP3qXeD6HBuoZimfM5jWfRfL6n8FF6mK2
+    snapshot_block_hash: BLu7qmWnrQT8SoMMzTnieBjsPGnt4xdYR2vtmxwiXAG2HWSb8D1
 
 Dependencies
 ------------
@@ -70,26 +70,15 @@ None (but make sure you have docker installed, `geerlingguy.docker` works well)
 Example Playbook
 ----------------
 
-For carthagenet:
-
-    - hosts: servers
-      roles:
-        - role: ecadlabs.tezos_node
-          bootstrap_strategy: snapshot
-          snapshot_url: https://storage.googleapis.com/tezos-snapshots/snapshot_carthagenet_BLsDDgeFGC2kGBCMpRm7T3DviJNxyrpJCUuj4fuReNW6hrkUDwa.full 
-          tezos_network: carthagenet
-          snapshot_block_hash: BLsDDgeFGC2kGBCMpRm7T3DviJNxyrpJCUuj4fuReNW6hrkUDwa
-          snapshot_tmp_file: /tmp/snapshot
-
 For mainnet:
 
     - hosts: servers
       roles:
         - role: ecadlabs.tezos_node
           bootstrap_strategy: snapshot
-          snapshot_url: https://storage.googleapis.com/tezos-snapshots/snapshot_mainnet_BLJZH8LBh64L9gasBZnTjbCGf5vVefYDCMr5bJYsamb4GWXTaox.full
+          snapshot_url: https://storage.googleapis.com/tezos-snapshots/snapshot_mainnet_BLu7qmWnrQT8SoMMzTnieBjsPGnt4xdYR2vtmxwiXAG2HWSb8D1.full
           tezos_network: mainnet
-          snapshot_block_hash: BLJZH8LBh64L9gasBZnTjbCGf5vVefYDCMr5bJYsamb4GWXTaox
+          snapshot_block_hash: BLu7qmWnrQT8SoMMzTnieBjsPGnt4xdYR2vtmxwiXAG2HWSb8D1
           snapshot_tmp_file: /tmp/snapshot
 
 License
@@ -103,4 +92,4 @@ Author Information
 Created by the humans from ECAD Labs Inc. https://ecadlabs.com
 
 
-[tezos_v7]: https://tezos.gitlab.io/releases/version-7.html
+[tezos_v8]: https://tezos.gitlab.io/releases/version-8.html
