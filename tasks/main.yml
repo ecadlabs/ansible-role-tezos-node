@@ -78,6 +78,7 @@
       - "{{ client_data_dir }}:/home/tezos/.tezos-client"
     ports:
       - "{{ RPC_PORT }}:{{ RPC_PORT_INTERNAL }}"
+      - "{{ P2P_PORT }}:{{ P2P_PORT_INTERNAL }}"
     networks:
       - name: "{{ tezos_network }}"
     entrypoint: >
