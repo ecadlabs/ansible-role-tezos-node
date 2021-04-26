@@ -1,10 +1,11 @@
 ---
 # defaults file for roles/tezos_node
 
-tezos_docker_image: tezos/tezos:v8.2
+tezos_docker_image: tezos/tezos:v9.0
+deployment_name: "{{ tezos_network }}"
 
-node_data_dir: "/srv/tezos/{{ tezos_network }}_node"
-client_data_dir: "/srv/tezos/{{ tezos_network }}_client"
+node_data_dir: "/srv/tezos/{{ deployment_name }}_node"
+client_data_dir: "/srv/tezos/{{ deployment_name }}_client"
 
 # The port that docker maps externally
 RPC_PORT: 8732
@@ -13,7 +14,7 @@ P2P_PORT: 9732
 RPC_PORT_INTERNAL: 8732
 P2P_PORT_INTERNAL: 9732
 
-node_rpc_url: "http://{{ tezos_network }}_node:{{ RPC_PORT_INTERNAL }}"
+node_rpc_url: "http://{{ deployment_name }}_node:{{ RPC_PORT_INTERNAL }}"
 
 history_mode: full
 
