@@ -66,11 +66,11 @@
 
 - name: create docker network
   docker_network:
-    name: "{{ tezos_network }}"
+    name: "{{ deployment_name }}"
 
 - name: run tezos node
   docker_container:
-    name: "{{ tezos_network }}_node"
+    name: "{{ deployment_name }}_node"
     image: "{{ tezos_docker_image }}"
     restart_policy: always
     volumes:
@@ -80,7 +80,7 @@
       - "{{ RPC_PORT }}:{{ RPC_PORT_INTERNAL }}"
       - "{{ P2P_PORT }}:{{ P2P_PORT_INTERNAL }}"
     networks:
-      - name: "{{ tezos_network }}"
+      - name: "{{ deployment_name }}"
     entrypoint: >
       tezos-node
       run
@@ -117,4 +117,4 @@
       --endpoint {{ node_rpc_url }}
       config init
     networks:
-      - name: "{{ tezos_network }}"
+      - name: "{{ deployment_name }}"
