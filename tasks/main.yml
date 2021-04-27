@@ -13,10 +13,6 @@
     node_rpc_url: "{% if node_rpc_url is defined %}{{ node_rpc_url }}{% else %}http://{{ network_name }}_node:{{ RPC_PORT_INTERNAL }}{% endif %}"
   when: network_name is defined
 
-- name: What are the values
-  debug:
-    msg: "The value of node_data_dir is {{ node_data_dir }}"
-
 - name: node data directories
   file:
     dest: "{{ item }}"
