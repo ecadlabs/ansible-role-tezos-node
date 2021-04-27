@@ -4,7 +4,7 @@
 - name: change tezos_network variable
   set_fact:
     network_name: "{{ tezos_network | regex_search('([^/]*)$') }}"
-  when: '"http" in tezos_network'
+  when: tezos_network is regex("((http|https)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*")
 
 - name: change node and client directory names
   set_fact:
