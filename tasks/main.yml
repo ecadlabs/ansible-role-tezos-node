@@ -1,5 +1,21 @@
 ---
-# tasks file for roles/tezos_node
+# tasks file for roles/tezos_node_envoy_proxy
+
+- name: change tezos_network variable
+  set_fact:
+    network_name: "{{ tezos_network | regex_search('([^/]*)$') }}"
+  when: '"http" in tezos_network'
+
+- name: change node and client directory names
+  set_fact:
+    node_data_dir: "/srv/tezos/{{ network_name }}_node"
+    client_data_dir: "/srv/tezos/{{ network_name }}_client"
+    node_rpc_url: "{% if node_rpc_url is defined %}{{ node_rpc_url }}{% else %}http://{{ network_name }}_node:{{ RPC_PORT_INTERNAL }}{% endif %}"
+  when: network_name is defined
+
+- name: What are the values
+  debug:
+    msg: "The value of node_data_dir is {{ node_data_dir }}"
 
 - name: node data directories
   file:
@@ -22,7 +38,7 @@
     dest: "{{ node_data_dir }}/config.json"
     owner: "100"
 
-- name: generate tezos-node config "{{ tezos_network }}"
+- name: generate tezos-node config "{% if network_name is defined %}{{ network_name }}{% else %}{{ tezos_network }}{% endif %}"
   when:  not has_config.stat.exists and tezos_node_config_template is undefined
   docker_container:
     name: init_tezos_node_config
@@ -66,11 +82,11 @@
 
 - name: create docker network
   docker_network:
-    name: "{{ deployment_name }}"
+    name: "{% if network_name is defined %}{{ network_name }}{% else %}{{ tezos_network }}{% endif %}"
 
 - name: run tezos node
   docker_container:
-    name: "{{ deployment_name }}_node"
+    name: "{% if network_name is defined %}{{ network_name }}{% else %}{{ tezos_network }}{% endif %}_node"
     image: "{{ tezos_docker_image }}"
     restart_policy: always
     volumes:
@@ -80,7 +96,7 @@
       - "{{ RPC_PORT }}:{{ RPC_PORT_INTERNAL }}"
       - "{{ P2P_PORT }}:{{ P2P_PORT_INTERNAL }}"
     networks:
-      - name: "{{ deployment_name }}"
+      - name: "{% if network_name is defined %}{{ network_name }}{% else %}{{ tezos_network }}{% endif %}"
     entrypoint: >
       tezos-node
       run
@@ -102,7 +118,7 @@
     path: "{{ client_data_dir }}/config"
   register: has_client_config
 
-- name: generate tezos-client config "{{ tezos_network }}"
+- name: generate tezos-client config "{% if network_name is defined %}{{ network_name }}{% else %}{{ tezos_network }}{% endif %}"
   when:  not has_client_config.stat.exists
   docker_container:
     name: init_tezos_client_config
@@ -117,4 +133,4 @@
       --endpoint {{ node_rpc_url }}
       config init
     networks:
-      - name: "{{ deployment_name }}"
+      - name: "{% if network_name is defined %}{{ network_name }}{% else %}{{ tezos_network }}{% endif %}"
