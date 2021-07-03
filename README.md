@@ -40,7 +40,7 @@ The location on the host where the Tezos client configuration will reside. This 
 
 The tezos docker image to use.
 
-    tezos_docker_image: tezos/tezos:v8.2
+    tezos_docker_image: tezos/tezos:v9.4
 
 The history mode you wish to operate your node in. Options are full, archive or snapshot (currently only tested using `full`)
 
@@ -58,10 +58,6 @@ The path or URL to the snapshot file that will be used for the initial import of
 
         snapshot_tmp_file: /tmp/snapshot
 
-The block hash of the _last_ block in the snapshot file. The import process uses this value to verify that the latest hash of the provided import file is the one you are expecting.
-
-    snapshot_block_hash: BLu7qmWnrQT8SoMMzTnieBjsPGnt4xdYR2vtmxwiXAG2HWSb8D1
-
 Dependencies
 ------------
 
@@ -76,9 +72,8 @@ For mainnet:
       roles:
         - role: ecadlabs.tezos_node
           bootstrap_strategy: snapshot
-          snapshot_url: https://storage.googleapis.com/tezos-snapshots/snapshot_mainnet_BLu7qmWnrQT8SoMMzTnieBjsPGnt4xdYR2vtmxwiXAG2HWSb8D1.full
+          snapshot_url: https://mainnet.xtz-shots.io/full # See https://xtz-shots.io/
           tezos_network: mainnet
-          snapshot_block_hash: BLu7qmWnrQT8SoMMzTnieBjsPGnt4xdYR2vtmxwiXAG2HWSb8D1
           snapshot_tmp_file: /tmp/snapshot
 
 License
