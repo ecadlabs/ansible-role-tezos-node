@@ -1,5 +1,5 @@
 ---
-# defaults file for roles/tezos_node_envoy_proxy
+# defaults file for ansible-rolde-tezos-node
 
 octez_version: v13.0
 tezos_docker_image: "tezos/tezos:{{ octez_version }}"
@@ -10,9 +10,12 @@ client_data_dir: "/srv/tezos/{{ tezos_network }}_client"
 # The port that docker maps externally
 rpc_port: 8732
 p2p_port: 9732
+octez_metrics_port: 9932
+
 # The port that the Tezos RPC process listens on internally
 rpc_port_internal: 8732
 p2p_port_internal: 9732
+octez_metrics_port_internal: 9932
 
 tezos_node_additional_parameters: []
 tezos_node_env_variables: {}
@@ -21,6 +24,3 @@ history_mode: full
 
 # Location of temp file for snapshot import
 snapshot_tmp_file: /tmp/snapshot
-
-# genesis or snapshot
-bootstrap_strategy: genesis
