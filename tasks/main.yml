@@ -3,7 +3,7 @@
   set_fact:
     network_name: "{{ tezos_network | basename }}"
 
-- name: change node and client directory names
+- name: set node rpc url
   set_fact:
     node_rpc_url: "{% if node_rpc_url is defined %}{{ node_rpc_url }}{% else %}http://{{ network_name }}_node:{{ rpc_port_internal }}{% endif %}"
 
