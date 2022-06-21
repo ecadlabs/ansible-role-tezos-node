@@ -1,23 +1,18 @@
 ---
-# tasks file for roles/tezos_node_envoy_proxy
-
-- name: change tezos_network variable
+- name: set network_name variable from tezos_network
   set_fact:
-    network_name: "{{ tezos_network | regex_search('([^/]*)$') }}"
-  when: tezos_network is regex("((http|https)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*")
+    network_name: "{{ tezos_network | basename }}"
 
-- name: change node and client directory names
+- name: set node rpc url
   set_fact:
-    node_data_dir: "/srv/tezos/{{ network_name }}_node"
-    client_data_dir: "/srv/tezos/{{ network_name }}_client"
-    node_rpc_url: "{% if node_rpc_url is defined %}{{ node_rpc_url }}{% else %}http://{{ network_name }}_node:{{ RPC_PORT_INTERNAL }}{% endif %}"
-  when: network_name is defined
+    node_rpc_url: "{% if node_rpc_url is defined %}{{ node_rpc_url }}{% else %}http://{{ network_name }}_node:{{ rpc_port_internal }}{% endif %}"
 
 - name: node data directories
   file:
     dest: "{{ item }}"
     state: directory
-    owner: "100"
+    owner: "1000"
+    mode: 0777
   with_items:
     - "{{ node_data_dir }}"
     - "{{ client_data_dir }}"
@@ -33,100 +28,113 @@
     src: "{{ tezos_node_config_template }}"
     dest: "{{ node_data_dir }}/config.json"
     owner: "100"
+    mode: 0755
 
-- name: generate tezos-node config "{% if network_name is defined %}{{ network_name }}{% else %}{{ tezos_network }}{% endif %}"
+- name: create docker network
+  docker_network:
+    name: "{{ network_name }}"
+
+- name: Docker Volume Container
+  docker_container:
+    name: "{{ network_name }}_node_volumes"
+    image: "{{ tezos_docker_image }}"
+    state: present
+    entrypoint: '/bin/true'
+    volumes:
+      - "{{ node_data_dir }}:/home/tezos/.tezos-node"
+      - "{{ client_data_dir }}:/home/tezos/.tezos-client"
+
+- name: generate tezos-node config "{{ network_name }}"
   when:  not has_config.stat.exists and tezos_node_config_template is undefined
   docker_container:
     name: init_tezos_node_config
     image: "{{ tezos_docker_image }}"
-    interactive: yes
     detach: no
     cleanup: yes
-    volumes:
-      - "{{ node_data_dir }}:/data/node"
     entrypoint: tezos-node
-    command: >
-      config init --network {{ tezos_network }}
-      --config-file=/data/node/config.json
+    command: >-
+      config init
+        --network {{ tezos_network }}
+    volumes_from:
+      - "{{ network_name }}_node_volumes"
 
 - name: check if an identity exists
   stat:
     path: "{{ node_data_dir }}/identity.json"
   register: has_identity
 
-# Generate identity
 - name: generate identity (Can take several minutes)
   docker_container:
     name: identity_generate
     image: "{{ tezos_docker_image }}"
-    interactive: yes
     detach: no
     cleanup: yes
-    volumes:
-      - "{{ node_data_dir }}:/data/node"
-      - "{{ client_data_dir }}:/home/tezos/.tezos-client"
     entrypoint: tezos-node
-    command: >
-      identity generate
-      --config-file=/data/node/config.json
-      --data-dir=/data/node/
+    command: identity generate
+    volumes_from:
+      - "{{ network_name }}_node_volumes"
   when: not has_identity.stat.exists
 
-- name: import snapshot include
-  when: bootstrap_strategy == "snapshot"
+- name: import Tezos snapshot
   include: snapshot_import.yml
-
-- name: create docker network
-  docker_network:
-    name: "{% if network_name is defined %}{{ network_name }}{% else %}{{ tezos_network }}{% endif %}"
+  when: snapshot_url is defined
 
 - name: run tezos node
   docker_container:
-    name: "{% if network_name is defined %}{{ network_name }}{% else %}{{ tezos_network }}{% endif %}_node"
+    name: "{{ network_name }}_node"
     image: "{{ tezos_docker_image }}"
     restart_policy: always
-    volumes:
-      - "{{ node_data_dir }}:/data/node"
-      - "{{ client_data_dir }}:/home/tezos/.tezos-client"
     ports:
-      - "{{ RPC_PORT }}:{{ RPC_PORT_INTERNAL }}"
-      - "{{ P2P_PORT }}:{{ P2P_PORT_INTERNAL }}"
+      - "{{ rpc_port }}:{{ rpc_port_internal }}"
+      - "{{ p2p_port }}:{{ p2p_port_internal }}"
+      - "{{ octez_metrics_port }}:{{ octez_metrics_port_internal }}"
     networks:
-      - name: "{% if network_name is defined %}{{ network_name }}{% else %}{{ tezos_network }}{% endif %}"
-    entrypoint: >
-      tezos-node
+      - name: "{{ network_name }}"
+    entrypoint: tezos-node
+    command: >-
       run
-      --network "{{ tezos_network }}"
-      --rpc-addr 0.0.0.0:{{ RPC_PORT_INTERNAL }}
-      --config-file=/data/node/config.json
-      --data-dir=/data/node/
-      --history-mode "{{ history_mode }}"
-      --bootstrap-threshold 1
+        --rpc-addr 0.0.0.0:{{ rpc_port_internal }}
+        --allow-all-rpc 0.0.0.0:{{ rpc_port_internal }}
+        --history-mode "{{ history_mode }}"
+        --cors-origin "*"
+        --cors-header "Content-Type"
+        {{ tezos_docker_image is match("tezos/tezos:(v13.*|master_.*)") | ternary("--metrics-addr=0.0.0.0:9932", "") }}
+        {{ tezos_node_additional_parameters | join(' ') }}
+    env: "{{ tezos_node_env_variables }}"
+    volumes_from:
+      - "{{ network_name }}_node_volumes"
 
-- name: wait for the tezos node port to open
-  wait_for:
-    timeout: 5
-    port: "{{ RPC_PORT }}"
-    host: "localhost"
+- name: deploy tezos_exporter side car
+  docker_container:
+    name: "tezos_exporter"
+    image: "{{ tezos_exporter_docker_image }}"
+    restart_policy: always
+    command: >
+      -tezos-node-url {{ node_rpc_url }}
+      -bootstraped-poll-interval 10s
+      -bootstraped-threshold 8
+    ports:
+      - 9489:9489
+    networks:
+      - name: "{{ network_name }}"
 
 - name: check if an tezos-client config.json exists
   stat:
     path: "{{ client_data_dir }}/config"
   register: has_client_config
 
-- name: generate tezos-client config "{% if network_name is defined %}{{ network_name }}{% else %}{{ tezos_network }}{% endif %}"
+- name: generate tezos-client config "{{ network_name }}"
   when:  not has_client_config.stat.exists
   docker_container:
     name: init_tezos_client_config
     image: "{{ tezos_docker_image }}"
-    interactive: yes
     detach: no
     cleanup: yes
-    volumes:
-      - "{{ client_data_dir }}:/home/tezos/.tezos-client"
-    entrypoint: /usr/local/bin/tezos-client
+    entrypoint: tezos-client
     command: >
       --endpoint {{ node_rpc_url }}
       config init
     networks:
-      - name: "{% if network_name is defined %}{{ network_name }}{% else %}{{ tezos_network }}{% endif %}"
+      - name: "{{ network_name }}"
+    volumes_from:
+      - "{{ network_name }}_node_volumes"

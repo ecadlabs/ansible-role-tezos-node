@@ -33,21 +33,23 @@
         interactive: yes
         detach: no
         cleanup: yes
+        volumes_from:
+          - "{{ network_name }}_node_volumes"
         volumes:
-          - "{{ node_data_dir }}:/data/node"
-          - "{{ client_data_dir }}:/data/client"
           - "{{ snapshot_tmp_file }}:/data/snapshot"
         entrypoint: tezos-node
         command: >
           snapshot import /data/snapshot
           --network {{ tezos_network }}
-          --data-dir=/data/node/
       register: import_out
-    - debug:
+
+    - name: Debug
+      debug:
         msg:  "Import output: {{ import_out }}"
+
   when: not context_dir.stat.exists and not store_dir.stat.exists
 
 - name: remove snapshot file
   file:
-    path: "{{ snapshot_tmp_file }}" 
+    path: "{{ snapshot_tmp_file }}"
     state: absent
