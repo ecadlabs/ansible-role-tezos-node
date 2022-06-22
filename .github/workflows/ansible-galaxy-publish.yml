@@ -2,7 +2,9 @@
 name: Publish role to ansible-galaxy
 
 on:
-  - push
+  push:
+    branches:
+      - master
 
 jobs:
   build:
