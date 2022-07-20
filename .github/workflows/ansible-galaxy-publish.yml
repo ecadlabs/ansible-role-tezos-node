@@ -1,0 +1,17 @@
+---
+name: Publish role to ansible-galaxy
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: galaxy
+        uses: robertdebock/galaxy-action@1.2.0
+        with:
+          galaxy_api_key: ${{ secrets.galaxy_api_key }}
