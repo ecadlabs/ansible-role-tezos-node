@@ -2,8 +2,9 @@
 name: Publish role to ansible-galaxy
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*"
 
 jobs:
   build:
