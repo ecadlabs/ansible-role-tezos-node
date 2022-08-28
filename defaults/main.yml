@@ -17,7 +17,7 @@ rpc_port_internal: 8732
 p2p_port_internal: 9732
 octez_metrics_port_internal: 9932
 
-tezos_node_additional_parameters: []
+tezos_node_additional_parameters: ["--metrics-addr=0.0.0.0:9932"]
 tezos_node_env_variables: {}
 
 history_mode: full
