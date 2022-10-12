@@ -3,9 +3,10 @@
   set_fact:
     network_name: "{{ tezos_network | basename }}"
 
-- name: set node rpc url
+- name: set dynamic facts at runtime
   set_fact:
     node_rpc_url: "{% if node_rpc_url is defined %}{{ node_rpc_url }}{% else %}http://{{ network_name }}_node:{{ rpc_port_internal }}{% endif %}"
+    octez_binary_prefix: "{% if octez_version is version('v15.0', '>=') %}octez{% else %}tezos{% endif %}"
 
 - name: node data directories
   file:
@@ -51,7 +52,7 @@
     image: "{{ tezos_docker_image }}"
     detach: no
     cleanup: yes
-    entrypoint: tezos-node
+    entrypoint: "{{ octez_binary_prefix }}-node"
     command: >-
       config init
         --network {{ tezos_network }}
@@ -69,7 +70,7 @@
     image: "{{ tezos_docker_image }}"
     detach: no
     cleanup: yes
-    entrypoint: tezos-node
+    entrypoint: "{{ octez_binary_prefix }}-node"
     command: identity generate
     volumes_from:
       - "{{ network_name }}_node_volumes"
@@ -90,7 +91,7 @@
       - "{{ octez_metrics_port }}:{{ octez_metrics_port_internal }}"
     networks:
       - name: "{{ network_name }}"
-    entrypoint: tezos-node
+    entrypoint: "{{ octez_binary_prefix }}-node"
     command: >-
       run
         --rpc-addr 0.0.0.0:{{ rpc_port_internal }}
@@ -132,7 +133,7 @@
     image: "{{ tezos_docker_image }}"
     detach: no
     cleanup: yes
-    entrypoint: tezos-client
+    entrypoint: "{{ octez_binary_prefix }}-client"
     command: >
       --endpoint {{ node_rpc_url }}
       config init
