@@ -32,11 +32,11 @@ The Tezos network you wish to provision. This variable does not have a default, 
 
 The location where on the host the Tezos nodes data directory will reside. This role uses Docker bind mounts over docker volumes.
 
-    node_data_dir: "/srv/tezos/{{ tezos_network }}_node"
+    node_data_dir: "/srv/tezos/{{ network_name }}_node"
 
 The location on the host where the Tezos client configuration will reside. This directory contains client configuration and keys used by the `tezos-client` command.
 
-    client_data_dir: "/srv/tezos/{{ tezos_network }}_client"
+    client_data_dir: "/srv/tezos/{{ network_name }}_client"
 
 The tezos docker image to use.
 
