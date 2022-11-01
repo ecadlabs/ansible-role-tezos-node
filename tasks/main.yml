@@ -101,7 +101,7 @@
         --cors-header "Content-Type"
         --metrics-addr=0.0.0.0:9932
         {{ tezos_node_additional_parameters | join(' ') }}
-    env: "{{ tezos_node_env_variables }}"
+    env: "{{ { 'TEZOS_CLIENT_UNSAFE_DISABLE_DISCLAIMER': 'YES' } | combine(tezos_node_env_variables) }}"
     volumes_from:
       - "{{ network_name }}_node_volumes"
     comparisons:
