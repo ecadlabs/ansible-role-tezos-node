@@ -37,10 +37,9 @@
           - "{{ network_name }}_node_volumes"
         volumes:
           - "{{ snapshot_tmp_file }}:/data/snapshot"
-        entrypoint: tezos-node
+        entrypoint: octez-node
         command: >
           snapshot import /data/snapshot
-          --network {{ tezos_network }}
       register: import_out
 
     - name: Debug
