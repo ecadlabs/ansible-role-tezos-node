@@ -1,7 +1,7 @@
 galaxy_info:
   role_name: tezos_node
   author: Jev Bjorsell
-  description: Setups up a Tezos Node
+  description: Configure and deploy a Tezos Node in a Docker container
   company: ECAD Labs Inc.
   issue_tracker_url: https://github.com/ecadlabs/ansible-role-tezos-node/issues
 
