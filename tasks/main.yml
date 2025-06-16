@@ -167,8 +167,8 @@
       env: strict
   when: tezos_node_config_template is defined and tezos_node_host_network
 
-- name: deploy tezos_exporter side car
-  docker_container:
+- name: Deploy the tezos_exporter side car
+  community.docker.docker_container:
     name: "tezos_exporter"
     image: "{{ tezos_exporter_docker_image }}"
     restart_policy: always
@@ -180,6 +180,8 @@
       - 9489:9489
     networks:
       - name: "{{ network_name }}"
+  when: run_tezos_exporter
+
 - name: Tezos DAL node
   community.docker.docker_container:
     name: "{{ network_name }}_dal_node"
@@ -196,7 +198,7 @@
       - "11732:11732"
     volumes_from:
       - "{{ network_name }}_node_volumes"
-  when: run_dal_node | default(false)
+  when: run_dal_node
 
 - name: Check if an tezos-client config.json exists
   ansible.builtin.stat:

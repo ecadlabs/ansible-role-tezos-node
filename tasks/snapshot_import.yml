@@ -1,38 +1,38 @@
-- name: check if data dir context exists
-  stat:
+- name: Check if data dir context exists
+  ansible.builtin.stat:
     path: "{{ node_data_dir }}/context"
   register: context_dir
 
-- name: check if data dir store exists
-  stat:
+- name: Check if data dir store exists
+  ansible.builtin.stat:
     path: "{{ node_data_dir }}/store"
   register: store_dir
 
-- name: import snapshot block
+- name: Import snapshot block
   block:
-    - name: download snapshot
-      #If the snapshot path is a URL, then download it
-      get_url:
+    - name: Download snapshot
+      # If the snapshot path is a URL, then download it
+      ansible.builtin.get_url:
         url: "{{ snapshot_url }}"
-        dest: "{{ snapshot_tmp_file }}" #TODO: Use tempfile
+        dest: "{{ snapshot_tmp_file }}"
         mode: '0444'
       when: snapshot_url is regex("^https?:.*")
 
-    - name: copy snapshot
-      #If the snapshot path is a unix file path, then copy it
+    - name: Copy the snapshot file
+      # If the snapshot path is a unix file path, then copy it
       when: snapshot_url is regex("^\/.*")
-      copy:
+      ansible.builtin.copy:
         src: "{{ snapshot_url }}"
-        dest: "{{ snapshot_tmp_file }}" #TODO: Use tempfile
+        dest: "{{ snapshot_tmp_file }}"
         mode: '0444'
 
-    - name: import snapshot (this can take some time)
-      docker_container:
+    - name: Import snapshot (this can take some time)
+      community.docker.docker_container:
         name: import_snapshot
         image: "{{ tezos_docker_image }}"
-        interactive: yes
-        detach: no
-        cleanup: yes
+        interactive: true
+        detach: false
+        cleanup: true
         volumes_from:
           - "{{ network_name }}_node_volumes"
         volumes:
@@ -42,13 +42,13 @@
           snapshot import /data/snapshot
       register: import_out
 
-    - name: Debug
-      debug:
-        msg:  "Import output: {{ import_out }}"
+    - name: Debug import output
+      ansible.builtin.debug:
+        msg: "Import output: {{ import_out }}"
 
   when: not context_dir.stat.exists and not store_dir.stat.exists
 
-- name: remove snapshot file
-  file:
+- name: Remove snapshot file
+  ansible.builtin.file:
     path: "{{ snapshot_tmp_file }}"
     state: absent
