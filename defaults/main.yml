@@ -1,11 +1,14 @@
 ---
 # defaults file for ansible-rolde-tezos-node
 
-octez_version: v14.1
+octez_version: v22.0
 tezos_docker_image: "tezos/tezos:{{ octez_version }}"
+
+docker_network_name: "{{ tezos_network | basename }}"
 
 node_data_dir: "/srv/tezos/{{ network_name }}_node"
 client_data_dir: "/srv/tezos/{{ network_name }}_client"
+dal_node_data_dir: "/srv/tezos/{{ network_name }}_dal_node"
 
 # The port that docker maps externally
 rpc_port: 8732
@@ -13,9 +16,11 @@ p2p_port: 9732
 octez_metrics_port: 9932
 
 # The port that the Tezos RPC process listens on internally
-rpc_port_internal: 8732
-p2p_port_internal: 9732
+octez_rpc_port_internal: 8732
+octez_p2p_port_internal: 9732
 octez_metrics_port_internal: 9932
+rpc_address: "{{ ansible_facts['default_ipv4']['address'] }}:{{ octez_rpc_port_internal }}"
+metrics_address: "{{ ansible_facts['default_ipv4']['address'] }}:{{ octez_metrics_port }}"
 
 tezos_node_additional_parameters: []
 tezos_node_env_variables: {}
@@ -24,3 +29,5 @@ history_mode: full
 
 # Location of temp file for snapshot import
 snapshot_tmp_file: /tmp/snapshot
+tezos_node_host_network: false
+enable_proxy_sidecar: false
