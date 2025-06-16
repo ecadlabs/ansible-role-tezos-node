@@ -31,3 +31,5 @@ history_mode: full
 snapshot_tmp_file: /tmp/snapshot
 tezos_node_host_network: false
 enable_proxy_sidecar: false
+
+run_dal_node: false

@@ -1,41 +1,50 @@
 ---
-- name: set network_name variable from tezos_network
-  set_fact:
+- name: Set network_name variable from tezos_network
+  ansible.builtin.set_fact:
     network_name: "{{ tezos_network | basename }}"
 
-- name: set dynamic facts at runtime
-  set_fact:
-    node_rpc_url: "{% if node_rpc_url is defined %}{{ node_rpc_url }}{% else %}http://{{ network_name }}_node:{{ rpc_port_internal }}{% endif %}"
+- name: Set dynamic facts at runtime
+  ansible.builtin.set_fact:
+    node_rpc_url: "{% if node_rpc_url is defined %}{{ node_rpc_url }}{% else %}http://{{ network_name }}_node:{{ octez_rpc_port_internal }}{% endif %}"
+    octez_binary_prefix: "{% if octez_version is version('v15.0', '>=') %}octez{% else %}tezos{% endif %}"
 
-- name: node data directories
-  file:
+- name: Node data directories
+  ansible.builtin.file:
     dest: "{{ item }}"
     state: directory
     owner: "1000"
-    mode: 0777
+    mode: '0755'
   with_items:
     - "{{ node_data_dir }}"
     - "{{ client_data_dir }}"
 
-- name: check if a tezos-node config.json exists
-  stat:
+- name: DAL node directory
+  ansible.builtin.file:
+    dest: "{{ dal_node_data_dir }}"
+    state: directory
+    owner: "1000"
+    mode: '0755'
+  when: run_dal_node
+
+- name: Check if a tezos-node config.json exists
+  ansible.builtin.stat:
     path: "{{ node_data_dir }}/config.json"
   register: has_config
 
-- name: render tezos tezos-node config file from "{{ tezos_node_config_template }}"
+- name: Render tezos tezos-node config file from "{{ tezos_node_config_template }}"
   when: tezos_node_config_template is defined and not has_config.stat.exists
-  template:
+  ansible.builtin.template:
     src: "{{ tezos_node_config_template }}"
     dest: "{{ node_data_dir }}/config.json"
     owner: "100"
-    mode: 0755
+    mode: '0755'
 
-- name: create docker network
-  docker_network:
-    name: "{{ network_name }}"
+- name: Create docker network
+  community.docker.docker_network:
+    name: "{{ docker_network_name }}"
 
 - name: Docker Volume Container
-  docker_container:
+  community.docker.docker_container:
     name: "{{ network_name }}_node_volumes"
     image: "{{ tezos_docker_image }}"
     state: present
@@ -43,67 +52,120 @@
     volumes:
       - "{{ node_data_dir }}:/home/tezos/.tezos-node"
       - "{{ client_data_dir }}:/home/tezos/.tezos-client"
+      - "{{ dal_node_data_dir }}:/home/tezos/.tezos-dal-node"
 
-- name: generate tezos-node config "{{ network_name }}"
-  when:  not has_config.stat.exists and tezos_node_config_template is undefined
-  docker_container:
+- name: Generate tezos-node config "{{ network_name }}"
+  when: not has_config.stat.exists and tezos_node_config_template is undefined
+  community.docker.docker_container:
     name: init_tezos_node_config
     image: "{{ tezos_docker_image }}"
-    detach: no
-    entrypoint: "octez-node"
+    detach: false
+    cleanup: true
+    entrypoint: "{{ octez_binary_prefix }}-node"
     command: >-
       config init
         --network {{ tezos_network }}
     volumes_from:
       - "{{ network_name }}_node_volumes"
 
-- name: check if an identity exists
-  stat:
+- name: Check if an identity exists
+  ansible.builtin.stat:
     path: "{{ node_data_dir }}/identity.json"
   register: has_identity
 
-- name: generate identity (Can take several minutes)
-  docker_container:
+- name: Generate identity (Can take several minutes)
+  community.docker.docker_container:
     name: identity_generate
     image: "{{ tezos_docker_image }}"
-    detach: no
-    cleanup: yes
-    entrypoint: "octez-node"
+    detach: false
+    cleanup: true
+    entrypoint: "{{ octez_binary_prefix }}-node"
     command: identity generate
     volumes_from:
       - "{{ network_name }}_node_volumes"
   when: not has_identity.stat.exists
 
-- name: import Tezos snapshot
-  include: snapshot_import.yml
+- name: Import Tezos snapshot
+  ansible.builtin.include_tasks: snapshot_import.yml
   when: snapshot_url is defined
 
-- name: run tezos node
-  docker_container:
+- name: Run tezos node
+  community.docker.docker_container:
     name: "{{ network_name }}_node"
     image: "{{ tezos_docker_image }}"
     restart_policy: always
+    image_name_mismatch: recreate
     ports:
-      - "{{ rpc_port }}:{{ rpc_port_internal }}"
-      - "{{ p2p_port }}:{{ p2p_port_internal }}"
+      - "{{ rpc_port }}:{{ octez_rpc_port_internal }}"
+      - "{{ p2p_port }}:{{ octez_p2p_port_internal }}"
       - "{{ octez_metrics_port }}:{{ octez_metrics_port_internal }}"
-    networks:
-      - name: "{{ network_name }}"
-    entrypoint: "octez-node"
+    network_mode: "{{ docker_network_name }}"
+    entrypoint: "{{ octez_binary_prefix }}-node"
     command: >-
       run
-        --rpc-addr 0.0.0.0:{{ rpc_port_internal }}
-        --allow-all-rpc 0.0.0.0:{{ rpc_port_internal }}
+        --rpc-addr 0.0.0.0:{{ octez_rpc_port_internal }}
+        --allow-all-rpc 0.0.0.0:{{ octez_rpc_port_internal }}
         --history-mode "{{ history_mode }}"
         --cors-origin "*"
         --cors-header "Content-Type"
         --metrics-addr=0.0.0.0:9932
         {{ tezos_node_additional_parameters | join(' ') }}
-    env: "{{ { 'TEZOS_CLIENT_UNSAFE_DISABLE_DISCLAIMER': 'YES' } | combine(tezos_node_env_variables) }}"
+    # env: "{{ {'TEZOS_CLIENT_UNSAFE_DISABLE_DISCLAIMER': 'YES', 'TEZOS_LOG': 'p2p.* -> debug'} | combine(tezos_node_env_variables) }}"
+    env: "{{ {'TEZOS_CLIENT_UNSAFE_DISABLE_DISCLAIMER': 'YES'} | combine(tezos_node_env_variables) }}"
     volumes_from:
       - "{{ network_name }}_node_volumes"
     comparisons:
       env: strict
+  when: tezos_node_config_template is not defined
+    and tezos_node_host_network is false
+    and enable_proxy_sidecar is false
+
+- name: Run tezos node with sidecar proxy
+  community.docker.docker_container:
+    name: "{{ network_name }}_node"
+    image: "{{ tezos_docker_image }}"
+    restart_policy: always
+    image_name_mismatch: recreate
+    ports:
+      - "{{ rpc_address }}:{{ octez_rpc_port_internal }}"
+      - "{{ p2p_port }}:{{ octez_p2p_port_internal }}"
+    network_mode: "{{ docker_network_name }}"
+    entrypoint: "{{ octez_binary_prefix }}-node"
+    command: >-
+      run
+        --rpc-addr 0.0.0.0:{{ octez_rpc_port_internal }}
+        --allow-all-rpc 0.0.0.0:{{ octez_rpc_port_internal }}
+        --history-mode "{{ history_mode }}"
+        --cors-origin "*"
+        --cors-header "Content-Type"
+        --metrics-addr=0.0.0.0:9932
+        {{ tezos_node_additional_parameters | join(' ') }}
+    # env: "{{ {'TEZOS_CLIENT_UNSAFE_DISABLE_DISCLAIMER': 'YES', 'TEZOS_LOG': 'p2p.* -> debug'} | combine(tezos_node_env_variables) }}"
+    env: "{{ {'TEZOS_CLIENT_UNSAFE_DISABLE_DISCLAIMER': 'YES'} | combine(tezos_node_env_variables) }}"
+    volumes_from:
+      - "{{ network_name }}_node_volumes"
+    comparisons:
+      env: strict
+  when: enable_proxy_sidecar | default(false)
+
+- name: Run tezos node on host network with template
+  community.docker.docker_container:
+    name: "{{ network_name }}_node"
+    image: "{{ tezos_docker_image }}"
+    restart_policy: always
+    image_name_mismatch: recreate
+    network_mode: host
+    entrypoint: "{{ octez_binary_prefix }}-node"
+    command: >-
+      run
+        {{ tezos_node_additional_parameters | join(' ') }}
+    # env: "{{ {'TEZOS_CLIENT_UNSAFE_DISABLE_DISCLAIMER': 'YES', 'TEZOS_LOG': 'p2p.* -> debug'} | combine(tezos_node_env_variables) }}"
+    env: "{{ {'TEZOS_CLIENT_UNSAFE_DISABLE_DISCLAIMER': 'YES'} | combine(tezos_node_env_variables) }}"
+    volumes_from:
+      - "{{ network_name }}_node_volumes"
+    comparisons:
+      env: strict
+  when: tezos_node_config_template is defined and tezos_node_host_network
 
 - name: deploy tezos_exporter side car
   docker_container:
@@ -118,24 +180,41 @@
       - 9489:9489
     networks:
       - name: "{{ network_name }}"
+- name: Tezos DAL node
+  community.docker.docker_container:
+    name: "{{ network_name }}_dal_node"
+    image: "{{ tezos_docker_image }}"
+    state: "started"
+    restart_policy: always
+    networks:
+      - name: "{{ docker_network_name }}"
+    entrypoint: "octez-dal-node"
+    command: >-
+      run
+    ports:
+      - "10732:10732"
+      - "11732:11732"
+    volumes_from:
+      - "{{ network_name }}_node_volumes"
+  when: run_dal_node | default(false)
 
-- name: check if an tezos-client config.json exists
-  stat:
+- name: Check if an tezos-client config.json exists
+  ansible.builtin.stat:
     path: "{{ client_data_dir }}/config"
   register: has_client_config
 
-- name: generate tezos-client config "{{ network_name }}"
-  when:  not has_client_config.stat.exists
-  docker_container:
+- name: Generate tezos-client config "{{ network_name }}"
+  when: not has_client_config.stat.exists
+  community.docker.docker_container:
     name: init_tezos_client_config
     image: "{{ tezos_docker_image }}"
-    detach: no
-    cleanup: yes
-    entrypoint: "octez-client"
+    detach: false
+    cleanup: true
+    entrypoint: "{{ octez_binary_prefix }}-client"
     command: >
       --endpoint {{ node_rpc_url }}
       config init
     networks:
-      - name: "{{ network_name }}"
+      - name: "{{ docker_network_name }}"
     volumes_from:
       - "{{ network_name }}_node_volumes"
