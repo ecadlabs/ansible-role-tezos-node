@@ -13,7 +13,7 @@
     dest: "{{ item }}"
     state: directory
     owner: "1000"
-    mode: '0755'
+    mode: '0777'
   with_items:
     - "{{ node_data_dir }}"
     - "{{ client_data_dir }}"
@@ -23,8 +23,8 @@
     dest: "{{ dal_node_data_dir }}"
     state: directory
     owner: "1000"
-    mode: '0755'
-  when: run_dal_node
+    mode: '0777'
+  when: run_dal_node | default(false)
 
 - name: Check if a tezos-node config.json exists
   ansible.builtin.stat:
@@ -167,7 +167,7 @@
       env: strict
   when: tezos_node_config_template is defined and tezos_node_host_network
 
-- name: Deploy the tezos_exporter side car
+- name: Deploy tezos_exporter side car
   community.docker.docker_container:
     name: "tezos_exporter"
     image: "{{ tezos_exporter_docker_image }}"
@@ -180,8 +180,6 @@
       - 9489:9489
     networks:
       - name: "{{ network_name }}"
-  when: run_tezos_exporter
-
 - name: Tezos DAL node
   community.docker.docker_container:
     name: "{{ network_name }}_dal_node"
@@ -194,11 +192,11 @@
     command: >-
       run
     ports:
-      - "10732:10732"
-      - "11732:11732"
+      - "{{ dal_node_address }}:10732"
+      - "{{ dal_metrics_address }}:11732"
     volumes_from:
       - "{{ network_name }}_node_volumes"
-  when: run_dal_node
+  when: run_dal_node | default(false)
 
 - name: Check if an tezos-client config.json exists
   ansible.builtin.stat:

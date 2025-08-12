@@ -1,7 +1,7 @@
 ---
 # defaults file for ansible-rolde-tezos-node
 
-octez_version: v22.0
+octez_version: v20.0
 tezos_docker_image: "tezos/tezos:{{ octez_version }}"
 
 docker_network_name: "{{ tezos_network | basename }}"
@@ -21,6 +21,8 @@ octez_p2p_port_internal: 9732
 octez_metrics_port_internal: 9932
 rpc_address: "{{ ansible_facts['default_ipv4']['address'] }}:{{ octez_rpc_port_internal }}"
 metrics_address: "{{ ansible_facts['default_ipv4']['address'] }}:{{ octez_metrics_port }}"
+dal_node_address: "{{ ansible_facts['default_ipv4']['address'] }}:10732"
+dal_metrics_address: "{{ ansible_facts['default_ipv4']['address'] }}:11732"
 
 tezos_node_additional_parameters: []
 tezos_node_env_variables: {}
@@ -31,6 +33,3 @@ history_mode: full
 snapshot_tmp_file: /tmp/snapshot
 tezos_node_host_network: false
 enable_proxy_sidecar: false
-
-run_dal_node: false
-run_tezos_exporter: true

@@ -9,21 +9,22 @@
   register: store_dir
 
 - name: Import snapshot block
+  when: not context_dir.stat.exists and not store_dir.stat.exists
   block:
     - name: Download snapshot
       # If the snapshot path is a URL, then download it
       ansible.builtin.get_url:
         url: "{{ snapshot_url }}"
-        dest: "{{ snapshot_tmp_file }}"
+        dest: "{{ snapshot_tmp_file }}" # TODO: Use tempfile
         mode: '0444'
       when: snapshot_url is regex("^https?:.*")
 
-    - name: Copy the snapshot file
+    - name: Copy snapshot
       # If the snapshot path is a unix file path, then copy it
       when: snapshot_url is regex("^\/.*")
       ansible.builtin.copy:
         src: "{{ snapshot_url }}"
-        dest: "{{ snapshot_tmp_file }}"
+        dest: "{{ snapshot_tmp_file }}" # TODO: Use tempfile
         mode: '0444'
 
     - name: Import snapshot (this can take some time)
@@ -33,20 +34,21 @@
         interactive: true
         detach: false
         cleanup: true
+        networks:
+          - name: "{{ docker_network_name }}"
         volumes_from:
           - "{{ network_name }}_node_volumes"
         volumes:
           - "{{ snapshot_tmp_file }}:/data/snapshot"
         entrypoint: octez-node
         command: >
-          snapshot import /data/snapshot
+          snapshot import /data/snapshot --no-check
       register: import_out
 
-    - name: Debug import output
+    - name: Debug
       ansible.builtin.debug:
-        msg: "Import output: {{ import_out }}"
+        msg: "Import output: {{ import_out.stdout }}"
 
-  when: not context_dir.stat.exists and not store_dir.stat.exists
 
 - name: Remove snapshot file
   ansible.builtin.file:
